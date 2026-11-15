@@ -4,6 +4,7 @@ import { ITEMS, type PerkId } from './shop';
 import { buy, load, write, type Loaded } from './save';
 import { createGame, isTrap, stageOf, tap, tick, type Ev, type Game } from './sim';
 import { makeRng } from './rng';
+import { buzz, hapticAvailable, hapticOn, setHaptic } from './haptic';
 import { bombSound, setSound, soundOn, weedSound } from './audio';
 
 const $ = <T extends HTMLElement>(id: string): T => {
@@ -171,12 +172,17 @@ function handle(evs: Ev[]) {
       floatPts(e.i, e.kind === 'bomb' ? 'BOUM −1 vie' : '−1 vie');
       if (e.kind === 'bomb') {
         bombSound();
+        buzz('bomb');
         explode(e.i, e.cleared);
-      } else weedSound();
+      } else {
+        weedSound();
+        buzz('weed');
+      }
       const what = e.kind === 'bomb' ? `Bombe ! ${e.cleared.length} fleur${e.cleared.length > 1 ? 's' : ''} effacée${e.cleared.length > 1 ? 's' : ''}.` : 'Mauvaise fleur !';
       liveLives.textContent = `${what} ${e.lives > 0 ? `Vies : ${e.lives} sur ${g.maxLives}.` : 'Partie finie.'}`;
       if (g.over) end();
     } else if (e.t === 'wilt') {
+      buzz('wilt');
       liveLives.textContent = e.lives > 0 ? `Une fleur a fané. Vies : ${e.lives} sur ${g.maxLives}.` : 'Dernière fleur fanée.';
     } else if (e.t === 'over') {
       end();
@@ -427,6 +433,18 @@ soundBtn.addEventListener('click', () => {
   paintSound();
 });
 paintSound();
+const hapticBtn = $('m-haptic');
+hapticBtn.hidden = !hapticAvailable();
+const paintHaptic = () => {
+  hapticBtn.setAttribute('aria-pressed', String(hapticOn()));
+  hapticBtn.textContent = hapticOn() ? 'Vibrations : oui' : 'Vibrations : non';
+};
+hapticBtn.addEventListener('click', () => {
+  setHaptic(!hapticOn());
+  paintHaptic();
+  buzz('wilt'); // essai immédiat
+});
+paintHaptic();
 
 // Aperçu pour les contrôles automatiques (pas de hook en production)
 if (new URLSearchParams(location.search).has('e2e')) {

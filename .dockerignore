@@ -8,3 +8,4 @@ LICENSE
 Dockerfile
 .dockerignore
 .env*
+dist-e2e

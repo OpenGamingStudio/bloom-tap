@@ -180,7 +180,7 @@ body {
     fill: #2e9e5b;
     transform: scale(1.1);
   }
-  /* fanée : pétales ternes et rétrécis, fleur qui penche */
+  /* fanée : pétales ternes (violet #6f5cb0, 3,2:1 sur le fond lilas, WCAG 1.4.11) et rétrécis, fleur qui penche */
   .cell[data-s="wilt"] .fl {
     transform: rotate(14deg) translateY(6%);
     transform-origin: 50% 90%;
@@ -190,7 +190,7 @@ body {
   }
   .cell[data-s="wilt"] .petals circle,
   .cell[data-s="wilt"][data-k="gold"] .petals circle {
-    fill: #a99fc9;
+    fill: #6f5cb0;
   }
   .cell[data-s="wilt"] .core,
   .cell[data-s="wilt"][data-k="gold"] .core {

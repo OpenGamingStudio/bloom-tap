@@ -2,7 +2,7 @@ import './style.css';
 import * as C from './config';
 import { ITEMS, type PerkId } from './shop';
 import { buy, load, write, type Loaded } from './save';
-import { createGame, isTrap, stageOf, tap, tick, type Ev, type Game } from './sim';
+import { createGame, isTrap, multiplier, stageOf, tap, tick, type Ev, type Game } from './sim';
 import { makeRng } from './rng';
 
 const $ = <T extends HTMLElement>(id: string): T => {
@@ -113,10 +113,9 @@ function renderHud() {
   const ck = g.combo >= 2 ? `${g.combo}` : '';
   if (ck !== comboKey) {
     comboKey = ck;
-    hudCombo.textContent = ck ? `Combo ${g.combo} · points ×${mult(g.combo)}` : ' ';
+    hudCombo.textContent = ck ? `Combo ${g.combo} · points ×${multiplier(g.combo)}` : ' ';
   }
 }
-const mult = (c: number) => Math.min(C.MULT_MAX, 1 + Math.floor(Math.max(0, c - 1) / C.COMBO_STEP));
 
 function renderCells() {
   for (let i = 0; i < C.CELLS; i++) {
@@ -229,7 +228,8 @@ function start(hard = hardMode) {
   run();
 }
 
-function end() {
+/** Verse la partie dans la sauvegarde : parties, record du mode, pétales. */
+function bank() {
   save.data.games++;
   const bestKey = g.hard ? 'bestHard' : 'best';
   if (g.score > save.data[bestKey]) {
@@ -238,6 +238,11 @@ function end() {
   }
   save.data.petals += g.petals;
   persist();
+}
+
+function end() {
+  bank();
+  const bestKey = g.hard ? 'bestHard' : 'best';
   renderCells();
   renderHud();
   liveScore.textContent = `Partie finie. Score ${g.score}.`;
@@ -388,6 +393,8 @@ window.addEventListener('blur', pause);
 $('btn-pause').addEventListener('click', pause);
 $('p-resume').addEventListener('click', resume);
 $('p-quit').addEventListener('click', () => {
+  g.over = true;
+  bank(); // quitter ne fait pas perdre les pétales ni le record de la partie
   refreshMenu();
   show('menu');
 });
@@ -402,8 +409,8 @@ $('o-menu').addEventListener('click', () => {
 });
 $('s-close').addEventListener('click', closeShop);
 
-// Aperçu pour les contrôles automatiques (pas de hook en production)
-if (new URLSearchParams(location.search).has('e2e')) {
+// Hook des contrôles automatiques : seulement en dev ou dans un build `npm run build:e2e`, jamais en production
+if ((import.meta.env.DEV || import.meta.env.MODE === 'e2e') && new URLSearchParams(location.search).has('e2e')) {
   (window as unknown as { __bt: unknown }).__bt = { get g() { return g; }, save };
 }
 

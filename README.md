@@ -4,7 +4,7 @@ Fais éclore les fleurs d'un tap avant qu'elles fanent : un jeu de réflexes jou
 
 A reflex web game: tap the flowers before they wilt. Playable in the browser, on mobile, with a mouse or a keyboard.
 
-- Jouer / Play : https://bloomtap.opengamingstudio.com (bientôt / soon)
+- Jouer / Play : https://bloom-tap.opengamingstudio.com
 - Licence : [MIT](LICENSE)
 - Projet de [OpenGamingStudio](https://github.com/OpenGamingStudio), studio de jeux web open source.
 

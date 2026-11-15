@@ -40,7 +40,7 @@ export type Ev =
   | { t: 'spawn'; i: number }
   | { t: 'bloom'; i: number; points: number; combo: number; gold: boolean }
   | { t: 'wilt'; i: number; lives: number }
-  | { t: 'trap'; i: number; kind: 'weed' | 'bomb'; lives: number }
+  | { t: 'trap'; i: number; kind: 'weed' | 'bomb'; lives: number; cleared: number[] }
   | { t: 'over' };
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
@@ -128,6 +128,23 @@ export function tick(g: Game, dt: number): Ev[] {
   return ev;
 }
 
+/** Explosion en i : efface les fleurs des cases voisines (sans points ni vie perdue) ; renvoie les cases vidées. */
+function blast(g: Game, i: number): number[] {
+  const r0 = Math.floor(i / C.GRID);
+  const c0 = i % C.GRID;
+  const out: number[] = [];
+  for (let r = Math.max(0, r0 - C.BOMB_RADIUS); r <= Math.min(C.GRID - 1, r0 + C.BOMB_RADIUS); r++) {
+    for (let c = Math.max(0, c0 - C.BOMB_RADIUS); c <= Math.min(C.GRID - 1, c0 + C.BOMB_RADIUS); c++) {
+      const k = r * C.GRID + c;
+      if (k !== i && g.cells[k]) {
+        g.cells[k] = null;
+        out.push(k);
+      }
+    }
+  }
+  return out;
+}
+
 /** Un tap sur la case i : éclosion si une fleur y est, rien sinon. */
 export function tap(g: Game, i: number): Ev | null {
   const f = g.cells[i];
@@ -136,9 +153,10 @@ export function tap(g: Game, i: number): Ev | null {
   if (f.kind === 'weed' || f.kind === 'bomb') {
     g.combo = 0;
     g.sinceTap = Infinity;
-    g.lives = f.kind === 'bomb' ? 0 : Math.max(0, g.lives - C.WEED_PENALTY);
+    const cleared = f.kind === 'bomb' ? blast(g, i) : [];
+    g.lives = Math.max(0, g.lives - (f.kind === 'bomb' ? C.BOMB_PENALTY : C.WEED_PENALTY));
     if (g.lives <= 0) g.over = true;
-    return { t: 'trap', i, kind: f.kind, lives: g.lives };
+    return { t: 'trap', i, kind: f.kind, lives: g.lives, cleared };
   }
   g.combo = g.sinceTap <= C.COMBO_WINDOW ? g.combo + 1 : 1;
   g.sinceTap = 0;

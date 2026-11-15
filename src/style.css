@@ -199,6 +199,16 @@ body {
   .cell .fl {
     transition: transform 120ms ease-out;
   }
+  /* Explosion de bombe : fond braise, contour en pointillés, un anneau qui s'étend (anneau supprimé si mouvements réduits) */
+  .cell.boom {
+    @apply bg-berry;
+    outline: 4px dashed #1d1b2f;
+    outline-offset: -4px;
+    animation: blast 450ms ease-out;
+  }
+  .cell.boom .pts {
+    @apply text-white;
+  }
   .pts {
     @apply pointer-events-none absolute inset-x-0 top-1 text-center text-2xl font-bold text-ink;
     animation: rise 600ms ease-out forwards;
@@ -218,6 +228,14 @@ body {
     opacity: 0;
   }
 }
+@keyframes blast {
+  from {
+    transform: scale(1.18);
+  }
+  to {
+    transform: scale(1);
+  }
+}
 @keyframes pop {
   50% {
     transform: scale(1.12);
@@ -230,7 +248,8 @@ body {
   .btn {
     transition: none;
   }
-  .cell.hit {
+  .cell.hit,
+  .cell.boom {
     animation: none;
   }
   .pts {

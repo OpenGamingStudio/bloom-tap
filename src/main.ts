@@ -4,6 +4,7 @@ import { ITEMS, type PerkId } from './shop';
 import { buy, load, write, type Loaded } from './save';
 import { createGame, isTrap, stageOf, tap, tick, type Ev, type Game } from './sim';
 import { makeRng } from './rng';
+import { bombSound, setSound, soundOn, weedSound } from './audio';
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const el = document.getElementById(id);
@@ -150,15 +151,30 @@ function floatPts(i: number, text: string) {
   }, 600);
 }
 
+/** Explosion : la case de la bombe et les cases vidées prennent la classe .boom (flash, sans mouvement si mouvements réduits). */
+function explode(i: number, cleared: number[]) {
+  for (const k of [i, ...cleared]) {
+    const el = cells[k];
+    el.classList.remove('boom');
+    void el.offsetWidth;
+    el.classList.add('boom');
+    window.setTimeout(() => el.classList.remove('boom'), 700);
+  }
+}
+
 function handle(evs: Ev[]) {
   for (const e of evs) {
     if (e.t === 'bloom') {
       floatPts(e.i, `+${e.points}`);
       announceScore(false);
     } else if (e.t === 'trap') {
-      floatPts(e.i, e.kind === 'bomb' ? 'BOUM' : '−1 vie');
-      liveLives.textContent =
-        e.kind === 'bomb' ? 'Bombe ! Partie finie.' : e.lives > 0 ? `Mauvaise fleur ! Vies : ${e.lives} sur ${g.maxLives}.` : 'Mauvaise fleur ! Partie finie.';
+      floatPts(e.i, e.kind === 'bomb' ? 'BOUM −1 vie' : '−1 vie');
+      if (e.kind === 'bomb') {
+        bombSound();
+        explode(e.i, e.cleared);
+      } else weedSound();
+      const what = e.kind === 'bomb' ? `Bombe ! ${e.cleared.length} fleur${e.cleared.length > 1 ? 's' : ''} effacée${e.cleared.length > 1 ? 's' : ''}.` : 'Mauvaise fleur !';
+      liveLives.textContent = `${what} ${e.lives > 0 ? `Vies : ${e.lives} sur ${g.maxLives}.` : 'Partie finie.'}`;
       if (g.over) end();
     } else if (e.t === 'wilt') {
       liveLives.textContent = e.lives > 0 ? `Une fleur a fané. Vies : ${e.lives} sur ${g.maxLives}.` : 'Dernière fleur fanée.';
@@ -401,6 +417,16 @@ $('o-menu').addEventListener('click', () => {
   show('menu');
 });
 $('s-close').addEventListener('click', closeShop);
+const soundBtn = $('m-sound');
+const paintSound = () => {
+  soundBtn.setAttribute('aria-pressed', String(soundOn()));
+  soundBtn.textContent = soundOn() ? 'Sons : oui' : 'Sons : non';
+};
+soundBtn.addEventListener('click', () => {
+  setSound(!soundOn());
+  paintSound();
+});
+paintSound();
 
 // Aperçu pour les contrôles automatiques (pas de hook en production)
 if (new URLSearchParams(location.search).has('e2e')) {

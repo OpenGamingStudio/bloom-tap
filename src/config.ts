@@ -32,5 +32,8 @@ export const WILT_PART = 0.67;
 /** Mode difficile : mauvaises fleurs et bombes qu'il ne faut pas toucher. */
 export const TRAP_CHANCE = 0.25;
 export const BOMB_SHARE = 0.4;
-/** Mauvaise fleur : vies perdues au tap (la bombe, elle, finit la partie). */
+/** Vies perdues au tap d'une mauvaise fleur et d'une bombe. */
 export const WEED_PENALTY = 1;
+export const BOMB_PENALTY = 1;
+/** Rayon de l'explosion d'une bombe (1 = les 8 cases voisines). */
+export const BOMB_RADIUS = 1;

@@ -4,6 +4,7 @@ import { itemById, type PerkId } from './shop';
 export interface SaveData {
   v: number;
   best: number;
+  bestHard: number;
   petals: number;
   games: number;
   owned: PerkId[];
@@ -15,7 +16,7 @@ export interface Store {
   setItem(k: string, v: string): void;
 }
 
-export const freshSave = (): SaveData => ({ v: SAVE_VERSION, best: 0, petals: 0, games: 0, owned: [] });
+export const freshSave = (): SaveData => ({ v: SAVE_VERSION, best: 0, bestHard: 0, petals: 0, games: 0, owned: [] });
 
 const int = (x: unknown): number => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? Math.floor(x) : 0);
 
@@ -26,6 +27,7 @@ export const migrate: Record<number, (d: Record<string, unknown>) => Record<stri
 export function sanitize(raw: Record<string, unknown>): SaveData {
   const s = freshSave();
   s.best = int(raw.best);
+  s.bestHard = int(raw.bestHard);
   s.petals = int(raw.petals);
   s.games = int(raw.games);
   const owned = Array.isArray(raw.owned) ? raw.owned : [];

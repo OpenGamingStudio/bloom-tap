@@ -32,7 +32,7 @@
     </header>
     <p id="hud-combo" class="combo" aria-hidden="true">&nbsp;</p>
     <div id="garden" class="garden" role="group" aria-label="Jardin, 4 lignes de 4 cases. Flèches pour te déplacer, Entrée ou Espace pour faire éclore."></div>
-    <p class="text-center text-base font-semibold">Touche les fleurs avant qu'elles fanent.</p>
+    <p class="text-center text-base font-semibold">Touche les fleurs avant qu'elles fanent. En mode difficile, évite les mauvaises fleurs et les bombes.</p>
   </div>
 </main>
 
@@ -42,8 +42,10 @@
     <svg class="mx-auto h-20 w-20" viewBox="0 0 64 64" aria-hidden="true"><use href="#fl-logo"/></svg>
     <h1 id="t-menu" class="title">Bloom Tap</h1>
     <p class="text-center text-lg">Fais éclore les fleurs d'un tap avant qu'elles fanent. Enchaîne vite pour un gros combo. Trois vies !</p>
-    <p class="stats"><span>Record : <b id="m-best">0</b></span><span>Pétales : <b id="m-petals">0</b></span></p>
-    <button id="m-play" type="button" class="btn btn-petal">Jouer</button>
+    <p class="text-center text-base font-semibold">Mode difficile : ne touche surtout pas les mauvaises fleurs (une vie en moins) ni les bombes (partie finie).</p>
+    <p class="stats"><span>Record facile : <b id="m-best">0</b></span><span>Record difficile : <b id="m-best-hard">0</b></span><span>Pétales : <b id="m-petals">0</b></span></p>
+    <button id="m-play" type="button" class="btn btn-petal">Jouer, mode facile</button>
+    <button id="m-hard" type="button" class="btn btn-berry">Jouer, mode difficile</button>
     <button id="m-shop" type="button" class="btn btn-sun">Boutique</button>
     <p id="m-warn" hidden class="text-center text-base font-semibold">Progression non sauvegardée : le stockage du navigateur est indisponible.</p>
   </div>
@@ -60,6 +62,7 @@
 <section id="scr-over" class="scr" role="dialog" aria-modal="true" aria-labelledby="t-over" hidden>
   <div class="panel">
     <h2 id="t-over" class="title">Partie finie</h2>
+    <p class="text-center text-lg font-bold" id="o-mode"></p>
     <p class="text-center text-5xl font-bold" id="o-score">0</p>
     <p id="o-record" hidden class="badge">Nouveau record !</p>
     <p class="stats"><span>Record : <b id="o-best">0</b></span><span>Pétales gagnés : <b id="o-petals">0</b></span></p>

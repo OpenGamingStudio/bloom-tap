@@ -2,7 +2,7 @@ import './style.css';
 import * as C from './config';
 import { ITEMS, type PerkId } from './shop';
 import { buy, load, write, type Loaded } from './save';
-import { createGame, stageOf, tap, tick, type Ev, type Game } from './sim';
+import { createGame, isTrap, stageOf, tap, tick, type Ev, type Game } from './sim';
 import { makeRng } from './rng';
 
 const $ = <T extends HTMLElement>(id: string): T => {
@@ -28,7 +28,13 @@ const FLOWER_SVG =
   '<g class="fl"><path d="M32 55V32" stroke="#2e9e5b" stroke-width="4" stroke-linecap="round" fill="none"/>' +
   '<path d="M32 46c-9 0-13-5-13-9 8 0 13 3 13 9z" fill="#2e9e5b"/>' +
   '<g class="petals"><circle cx="32" cy="15" r="8"/><circle cx="43" cy="26" r="8"/><circle cx="32" cy="37" r="8"/><circle cx="21" cy="26" r="8"/></g>' +
-  '<circle class="core" cx="32" cy="26" r="7"/></g></svg>';
+  '<circle class="core" cx="32" cy="26" r="7"/></g>' +
+  '<g class="weed"><path d="M32 55V40" stroke="#1d1b2f" stroke-width="4" stroke-linecap="round" fill="none"/>' +
+  '<path d="M32 8l6 10 11-4-4 11 10 6-11 3 2 11-10-6-10 6 2-11-11-3 10-6-4-11 11 4z" fill="#7a2fa0" stroke="#1d1b2f" stroke-width="3" stroke-linejoin="round"/>' +
+  '<path d="M26 22l12 12M38 22L26 34" stroke="#fff8ea" stroke-width="4" stroke-linecap="round"/></g>' +
+  '<g class="bomb"><circle cx="30" cy="38" r="17" fill="#1d1b2f"/><path d="M40 24l6-7" stroke="#1d1b2f" stroke-width="4" stroke-linecap="round"/>' +
+  '<path d="M46 9v8M41 13h10M42 9l8 8M50 9l-8 8" stroke="#ffc93c" stroke-width="3" stroke-linecap="round"/>' +
+  '<circle cx="23" cy="31" r="4" fill="#fff8ea"/><path d="M24 40l12 12M36 40L24 52" stroke="#ff6fa5" stroke-width="4" stroke-linecap="round"/></g></svg>';
 
 const cells: HTMLButtonElement[] = [];
 const shown: string[] = [];
@@ -44,9 +50,11 @@ for (let i = 0; i < C.CELLS; i++) {
   cells.push(b);
   shown.push('');
 }
-const cellName = (i: number, s: string, gold: boolean): string => {
+const cellName = (i: number, s: string, gold: boolean, kind = ''): string => {
   const pos = `ligne ${Math.floor(i / C.GRID) + 1}, colonne ${(i % C.GRID) + 1}`;
   if (s === 'empty') return `${pos} : vide`;
+  if (kind === 'bomb') return `${pos} : bombe, ne pas toucher`;
+  if (kind === 'weed') return `${pos} : mauvaise fleur, ne pas toucher`;
   const what = s === 'bud' ? 'bouton' : s === 'bloom' ? 'fleur ouverte' : 'fleur qui fane';
   return `${pos} : ${what}${gold ? ' dorée' : ''}`;
 };
@@ -59,6 +67,7 @@ let last = 0;
 let raf = 0;
 let shopFrom: 'menu' | 'over' = 'menu';
 let newRecord = false;
+let hardMode = false;
 
 const perks = () => ({
   gold: save.data.owned.includes('gold'),
@@ -112,7 +121,7 @@ const mult = (c: number) => Math.min(C.MULT_MAX, 1 + Math.floor(Math.max(0, c - 
 function renderCells() {
   for (let i = 0; i < C.CELLS; i++) {
     const f = g.cells[i];
-    const s = f ? stageOf(f) : 'empty';
+    const s = f ? (isTrap(f.kind) ? 'trap' : stageOf(f)) : 'empty';
     const k = f ? f.kind : '';
     const key = s + k;
     if (shown[i] === key) continue;
@@ -121,7 +130,7 @@ function renderCells() {
     el.dataset.s = s;
     if (k) el.dataset.k = k;
     else delete el.dataset.k;
-    el.setAttribute('aria-label', cellName(i, s, k === 'gold'));
+    el.setAttribute('aria-label', cellName(i, s, k === 'gold', k));
   }
 }
 
@@ -146,6 +155,11 @@ function handle(evs: Ev[]) {
     if (e.t === 'bloom') {
       floatPts(e.i, `+${e.points}`);
       announceScore(false);
+    } else if (e.t === 'trap') {
+      floatPts(e.i, e.kind === 'bomb' ? 'BOUM' : '−1 vie');
+      liveLives.textContent =
+        e.kind === 'bomb' ? 'Bombe ! Partie finie.' : e.lives > 0 ? `Mauvaise fleur ! Vies : ${e.lives} sur ${g.maxLives}.` : 'Mauvaise fleur ! Partie finie.';
+      if (g.over) end();
     } else if (e.t === 'wilt') {
       liveLives.textContent = e.lives > 0 ? `Une fleur a fané. Vies : ${e.lives} sur ${g.maxLives}.` : 'Dernière fleur fanée.';
     } else if (e.t === 'over') {
@@ -195,12 +209,14 @@ function show(m: Mode) {
 
 function refreshMenu() {
   $('m-best').textContent = String(save.data.best);
+  $('m-best-hard').textContent = String(save.data.bestHard);
   $('m-petals').textContent = String(save.data.petals);
   $('m-warn').hidden = save.persistent && persist();
 }
 
-function start() {
-  g = createGame(perks(), makeRng((Date.now() ^ (Math.random() * 2 ** 31)) >>> 0));
+function start(hard = hardMode) {
+  hardMode = hard;
+  g = createGame(perks(), makeRng((Date.now() ^ (Math.random() * 2 ** 31)) >>> 0), hard);
   newRecord = false;
   shown.fill('');
   livesKey = '';
@@ -215,8 +231,9 @@ function start() {
 
 function end() {
   save.data.games++;
-  if (g.score > save.data.best) {
-    save.data.best = g.score;
+  const bestKey = g.hard ? 'bestHard' : 'best';
+  if (g.score > save.data[bestKey]) {
+    save.data[bestKey] = g.score;
     newRecord = g.score > 0;
   }
   save.data.petals += g.petals;
@@ -225,7 +242,8 @@ function end() {
   renderHud();
   liveScore.textContent = `Partie finie. Score ${g.score}.`;
   $('o-score').textContent = `${g.score} points`;
-  $('o-best').textContent = String(save.data.best);
+  $('o-best').textContent = String(save.data[bestKey]);
+  $('o-mode').textContent = g.hard ? 'Mode difficile' : 'Mode facile';
   $('o-petals').textContent = String(g.petals);
   $('o-record').hidden = !newRecord;
   $('o-detail').textContent = `${g.blooms} fleurs écloses, meilleur combo ${g.bestCombo}.`;
@@ -373,9 +391,10 @@ $('p-quit').addEventListener('click', () => {
   refreshMenu();
   show('menu');
 });
-$('m-play').addEventListener('click', start);
+$('m-play').addEventListener('click', () => start(false));
+$('m-hard').addEventListener('click', () => start(true));
 $('m-shop').addEventListener('click', () => openShop('menu'));
-$('o-again').addEventListener('click', start);
+$('o-again').addEventListener('click', () => start());
 $('o-shop').addEventListener('click', () => openShop('over'));
 $('o-menu').addEventListener('click', () => {
   refreshMenu();

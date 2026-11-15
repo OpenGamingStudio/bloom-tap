@@ -118,3 +118,62 @@ describe('vies', () => {
     expect(tap(g, 1)).toBeNull();
   });
 });
+
+describe('mode difficile', () => {
+  const hardGame = (seed = 1) => createGame(none, makeRng(seed), true);
+  const spawnAll = (g: ReturnType<typeof hardGame>, kind: 'weed' | 'bomb') => {
+    g.cells[0] = { kind, age: 0, life: 1000 };
+  };
+  it('le mode facile ne fait jamais apparaître de piège', () => {
+    const g = mk(none, 7);
+    g.lives = 1e9;
+    for (let i = 0; i < 2000; i++) tick(g, 50);
+    expect(g.cells.some((c) => c && (c.kind === 'weed' || c.kind === 'bomb'))).toBe(false);
+  });
+  it('le mode difficile en fait apparaître', () => {
+    const seen = new Set<string>();
+    const g = hardGame(3);
+    g.lives = 1e9;
+    for (let i = 0; i < 4000; i++) {
+      tick(g, 50);
+      g.cells.forEach((c) => c && seen.add(c.kind));
+    }
+    expect(seen.has('weed')).toBe(true);
+    expect(seen.has('bomb')).toBe(true);
+    expect(seen.has('normal')).toBe(true);
+  });
+  it('mauvaise fleur : une vie en moins, combo remis à zéro, pas de points', () => {
+    const g = hardGame();
+    g.combo = 4;
+    g.score = 50;
+    spawnAll(g, 'weed');
+    const ev = tap(g, 0);
+    expect(ev).toMatchObject({ t: 'trap', kind: 'weed', lives: 2 });
+    expect(g.lives).toBe(2);
+    expect(g.combo).toBe(0);
+    expect(g.score).toBe(50);
+    expect(g.over).toBe(false);
+  });
+  it('bombe : la partie est finie', () => {
+    const g = hardGame();
+    spawnAll(g, 'bomb');
+    tap(g, 0);
+    expect(g.lives).toBe(0);
+    expect(g.over).toBe(true);
+  });
+  it('mauvaise fleur sur la dernière vie : fin de partie', () => {
+    const g = hardGame();
+    g.lives = 1;
+    spawnAll(g, 'weed');
+    tap(g, 0);
+    expect(g.over).toBe(true);
+  });
+  it('un piège ignoré disparaît sans coûter de vie', () => {
+    const g = hardGame();
+    spawnAll(g, 'bomb');
+    g.nextSpawn = 1e9;
+    tick(g, 1500);
+    expect(g.cells[0]).toBeNull();
+    expect(g.lives).toBe(3);
+  });
+});

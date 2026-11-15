@@ -53,6 +53,9 @@ body {
   .btn-petal {
     @apply bg-petal;
   }
+  .btn-berry {
+    @apply bg-berry text-white;
+  }
   .btn-sun {
     @apply bg-sun;
   }
@@ -118,6 +121,22 @@ body {
   }
   .cell[data-s="wilt"] {
     @apply bg-lilac;
+  }
+  .cell[data-s="trap"] {
+    @apply bg-sun;
+  }
+  .cell .weed,
+  .cell .bomb {
+    display: none;
+  }
+  /* Pièges : forme propre (étoile à piques ou bombe à mèche), reconnaissables sans la couleur */
+  .cell[data-k="weed"] .weed,
+  .cell[data-k="bomb"] .bomb {
+    display: block;
+  }
+  .cell[data-k="weed"] .fl,
+  .cell[data-k="bomb"] .fl {
+    display: none;
   }
   .cell svg {
     @apply h-full w-full;

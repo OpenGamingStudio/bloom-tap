@@ -28,3 +28,9 @@ export const SLOW_FACTOR = 1.35;
 /** Parts de la vie d'une fleur : bouton, puis fleur ouverte, puis fanée (dernier tiers). */
 export const BUD_PART = 0.2;
 export const WILT_PART = 0.67;
+
+/** Mode difficile : mauvaises fleurs et bombes qu'il ne faut pas toucher. */
+export const TRAP_CHANCE = 0.25;
+export const BOMB_SHARE = 0.4;
+/** Mauvaise fleur : vies perdues au tap (la bombe, elle, finit la partie). */
+export const WEED_PENALTY = 1;

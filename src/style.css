@@ -1,0 +1,220 @@
+@import "tailwindcss";
+/* « blur » est un événement du navigateur dans main.ts, pas une classe : aucun flou dans le CSS compilé */
+@source not inline("blur");
+
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("./fonts/fredoka-latin-wght-normal.woff2") format("woff2");
+}
+
+/* Identité Bloom Tap : « le jardin en papier découpé ». Aplats francs, contour encre 3 px, ombre dure, aucun dégradé. */
+@theme {
+  --color-*: initial;
+  --color-ink: #1d1b2f;
+  --color-paper: #fff8ea;
+  --color-lilac: #cdbdff;
+  --color-mint: #a8e6cf;
+  --color-petal: #ff6fa5;
+  --color-sun: #ffc93c;
+  --color-leaf: #2e9e5b;
+  --color-berry: #c2255c;
+  --color-white: #ffffff;
+  --font-sans: "Fredoka", ui-rounded, sans-serif;
+  --shadow-hard: 4px 4px 0 #1d1b2f;
+}
+
+/* Racine à 100 % : tout est en rem, le zoom du texte du navigateur est respecté */
+html {
+  font-size: 100%;
+}
+html,
+body {
+  background: #cdbdff;
+  color: #1d1b2f;
+  font-weight: 500;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-12 min-w-12 items-center justify-center gap-2 rounded-2xl border-[3px] border-ink bg-paper px-5 py-2 text-xl font-bold text-ink shadow-hard;
+    touch-action: manipulation;
+  }
+  .btn:active:not(:disabled) {
+    @apply translate-x-1 translate-y-1 shadow-none;
+  }
+  .btn:disabled {
+    @apply cursor-not-allowed border-dashed bg-lilac shadow-none;
+  }
+  .btn-petal {
+    @apply bg-petal;
+  }
+  .btn-sun {
+    @apply bg-sun;
+  }
+  .btn-paper {
+    @apply bg-paper;
+  }
+  .btn-icon {
+    @apply px-0;
+  }
+  /* Focus visible sur tous les fonds : filet encre cerné de blanc */
+  .btn:focus-visible,
+  .cell:focus-visible {
+    outline: 3px solid #1d1b2f;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 9px #ffffff;
+    position: relative;
+    z-index: 1;
+  }
+
+  .chip {
+    @apply flex min-h-12 items-center gap-2 rounded-2xl border-[3px] border-ink bg-paper px-3 py-1 font-bold shadow-hard;
+  }
+  .combo {
+    @apply min-h-8 text-center text-2xl font-bold;
+  }
+
+  /* Écrans */
+  .scr {
+    @apply fixed inset-0 z-10 flex items-center justify-center overflow-y-auto bg-lilac p-3;
+  }
+  .scr[hidden] {
+    display: none;
+  }
+  .panel {
+    @apply my-auto flex w-full max-w-[26rem] flex-col gap-4 rounded-3xl border-[3px] border-ink bg-mint p-5 shadow-hard;
+  }
+  .title {
+    @apply text-center text-4xl font-bold;
+  }
+  .stats {
+    @apply flex flex-wrap justify-center gap-x-5 gap-y-1 text-lg;
+  }
+  .badge {
+    @apply mx-auto rounded-full border-[3px] border-ink bg-sun px-4 py-1 text-lg font-bold;
+  }
+  .item {
+    @apply flex flex-col gap-2 rounded-2xl border-[3px] border-ink bg-paper p-3;
+  }
+
+  /* Jardin : 4×4, cases de 44 px minimum à 100 % de racine */
+  .garden {
+    @apply grid grid-cols-4 gap-2;
+    width: max(12.5rem, min(100%, 26rem, calc(100dvh - 13rem)));
+  }
+  .cell {
+    @apply relative aspect-square min-h-11 min-w-11 rounded-2xl border-[3px] border-ink bg-mint p-0;
+    touch-action: manipulation;
+    box-shadow: 3px 3px 0 #1d1b2f;
+  }
+  .cell[data-s="bloom"],
+  .cell[data-s="bud"] {
+    @apply bg-paper;
+  }
+  .cell[data-s="wilt"] {
+    @apply bg-lilac;
+  }
+  .cell svg {
+    @apply h-full w-full;
+  }
+  /* Fleur : tige et feuille, puis pétales, puis cœur. Le stade change la forme, pas seulement la couleur. */
+  .cell .fl {
+    display: none;
+  }
+  .cell:not([data-s="empty"]) .fl {
+    display: block;
+  }
+  .cell .mound {
+    fill: #2e9e5b;
+  }
+  .fl .petals circle {
+    fill: #ff6fa5;
+    stroke: #1d1b2f;
+    stroke-width: 3;
+  }
+  .cell[data-k="gold"] .petals circle {
+    fill: #ffc93c;
+  }
+  .fl .core {
+    fill: #ffc93c;
+    stroke: #1d1b2f;
+    stroke-width: 3;
+  }
+  .cell[data-k="gold"] .core {
+    fill: #ff6fa5;
+  }
+  .fl .petals,
+  .fl .core {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  /* bouton : tout petit et fermé */
+  .cell[data-s="bud"] .petals {
+    transform: scale(0.45);
+  }
+  .cell[data-s="bud"] .core {
+    fill: #2e9e5b;
+    transform: scale(1.1);
+  }
+  /* fanée : pétales ternes et rétrécis, fleur qui penche */
+  .cell[data-s="wilt"] .fl {
+    transform: rotate(14deg) translateY(6%);
+    transform-origin: 50% 90%;
+  }
+  .cell[data-s="wilt"] .petals {
+    transform: scale(0.7);
+  }
+  .cell[data-s="wilt"] .petals circle,
+  .cell[data-s="wilt"][data-k="gold"] .petals circle {
+    fill: #a99fc9;
+  }
+  .cell[data-s="wilt"] .core,
+  .cell[data-s="wilt"][data-k="gold"] .core {
+    fill: #fff8ea;
+  }
+  .cell .fl {
+    transition: transform 120ms ease-out;
+  }
+  .pts {
+    @apply pointer-events-none absolute inset-x-0 top-1 text-center text-2xl font-bold text-ink;
+    animation: rise 600ms ease-out forwards;
+  }
+  .cell.hit {
+    animation: pop 200ms ease-out;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-1.25rem);
+    opacity: 0;
+  }
+}
+@keyframes pop {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+/* Mouvements réduits : plus d'animation ni de transition (les points s'affichent sans bouger) */
+@media (prefers-reduced-motion: reduce) {
+  .cell .fl,
+  .btn {
+    transition: none;
+  }
+  .cell.hit {
+    animation: none;
+  }
+  .pts {
+    animation: none;
+  }
+}

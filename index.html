@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bloom Tap</title>
+<meta name="description" content="Bloom Tap, un jeu web open source d'OpenGamingStudio : fais éclore les fleurs d'un tap avant qu'elles ne fanent, enchaîne les combos.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; manifest-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#CDBDFF">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<script type="module" src="/src/main.ts"></script>
+</head>
+<body class="font-sans">
+<noscript><p class="p-6 text-xl font-bold">Bloom Tap a besoin de JavaScript pour fonctionner.</p></noscript>
+
+<!-- Annonces pour les lecteurs d'écran -->
+<p id="live-score" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+<p id="live-lives" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+
+<main id="app" class="mx-auto flex min-h-dvh w-full max-w-[28rem] flex-col items-center gap-3 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+  <div id="game" class="flex w-full flex-1 flex-col items-center gap-3">
+    <header class="flex w-full items-center justify-between gap-2">
+      <p class="chip" aria-hidden="true"><span class="text-sm font-bold uppercase">Score</span> <span id="hud-score" class="text-3xl leading-none">0</span></p>
+      <p id="hud-lives" class="chip" aria-hidden="true"></p>
+      <button id="btn-pause" type="button" class="btn btn-sun btn-icon" aria-label="Pause" aria-keyshortcuts="Escape P">
+        <svg class="h-6 w-6" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v16M16 4v16" stroke="#1D1B2F" stroke-width="5" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+    <p id="hud-combo" class="combo" aria-hidden="true">&nbsp;</p>
+    <div id="garden" class="garden" role="group" aria-label="Jardin, 4 lignes de 4 cases. Flèches pour te déplacer, Entrée ou Espace pour faire éclore."></div>
+    <p class="text-center text-base font-semibold">Touche les fleurs avant qu'elles fanent.</p>
+  </div>
+</main>
+
+<!-- Écrans (fenêtres) -->
+<section id="scr-menu" class="scr" role="dialog" aria-modal="true" aria-labelledby="t-menu">
+  <div class="panel">
+    <svg class="mx-auto h-20 w-20" viewBox="0 0 64 64" aria-hidden="true"><use href="#fl-logo"/></svg>
+    <h1 id="t-menu" class="title">Bloom Tap</h1>
+    <p class="text-center text-lg">Fais éclore les fleurs d'un tap avant qu'elles fanent. Enchaîne vite pour un gros combo. Trois vies !</p>
+    <p class="stats"><span>Record : <b id="m-best">0</b></span><span>Pétales : <b id="m-petals">0</b></span></p>
+    <button id="m-play" type="button" class="btn btn-petal">Jouer</button>
+    <button id="m-shop" type="button" class="btn btn-sun">Boutique</button>
+    <p id="m-warn" hidden class="text-center text-base font-semibold">Progression non sauvegardée : le stockage du navigateur est indisponible.</p>
+  </div>
+</section>
+
+<section id="scr-pause" class="scr" role="dialog" aria-modal="true" aria-labelledby="t-pause" hidden>
+  <div class="panel">
+    <h2 id="t-pause" class="title">Pause</h2>
+    <button id="p-resume" type="button" class="btn btn-petal">Reprendre</button>
+    <button id="p-quit" type="button" class="btn btn-paper">Quitter la partie</button>
+  </div>
+</section>
+
+<section id="scr-over" class="scr" role="dialog" aria-modal="true" aria-labelledby="t-over" hidden>
+  <div class="panel">
+    <h2 id="t-over" class="title">Partie finie</h2>
+    <p class="text-center text-5xl font-bold" id="o-score">0</p>
+    <p id="o-record" hidden class="badge">Nouveau record !</p>
+    <p class="stats"><span>Record : <b id="o-best">0</b></span><span>Pétales gagnés : <b id="o-petals">0</b></span></p>
+    <p class="text-center text-base" id="o-detail"></p>
+    <button id="o-again" type="button" class="btn btn-petal">Rejouer</button>
+    <button id="o-shop" type="button" class="btn btn-sun">Boutique</button>
+    <button id="o-menu" type="button" class="btn btn-paper">Menu</button>
+  </div>
+</section>
+
+<section id="scr-shop" class="scr" role="dialog" aria-modal="true" aria-labelledby="t-shop" hidden>
+  <div class="panel">
+    <h2 id="t-shop" class="title">Boutique</h2>
+    <p class="stats"><span>Pétales : <b id="s-petals">0</b></span></p>
+    <ul id="s-list" class="flex flex-col gap-3"></ul>
+    <p id="s-live" class="text-center text-base font-semibold" role="status" aria-live="polite">&nbsp;</p>
+    <button id="s-close" type="button" class="btn btn-paper">Fermer</button>
+  </div>
+</section>
+
+<!-- Dessins réutilisés -->
+<svg width="0" height="0" class="absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="fl-logo">
+      <circle cx="32" cy="14" r="12" fill="#FF6FA5" stroke="#1D1B2F" stroke-width="4"/><circle cx="50" cy="32" r="12" fill="#FF6FA5" stroke="#1D1B2F" stroke-width="4"/><circle cx="32" cy="50" r="12" fill="#FF6FA5" stroke="#1D1B2F" stroke-width="4"/><circle cx="14" cy="32" r="12" fill="#FF6FA5" stroke="#1D1B2F" stroke-width="4"/><circle cx="32" cy="32" r="11" fill="#FFC93C" stroke="#1D1B2F" stroke-width="4"/>
+    </g>
+  </defs>
+</svg>
+</body>
+</html>

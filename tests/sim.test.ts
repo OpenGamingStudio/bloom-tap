@@ -154,11 +154,44 @@ describe('mode difficile', () => {
     expect(g.score).toBe(50);
     expect(g.over).toBe(false);
   });
-  it('bombe : la partie est finie', () => {
+  it('bombe : une vie en moins, combo à zéro, la partie continue', () => {
     const g = hardGame();
+    g.combo = 4;
+    spawnAll(g, 'bomb');
+    const ev = tap(g, 0);
+    expect(ev).toMatchObject({ t: 'trap', kind: 'bomb', lives: 2 });
+    expect(g.lives).toBe(2);
+    expect(g.combo).toBe(0);
+    expect(g.over).toBe(false);
+  });
+  it('bombe : efface les 8 cases voisines (fleurs et pièges), pas les autres, sans points', () => {
+    const g = hardGame();
+    g.score = 30;
+    const f = (kind: 'normal' | 'gold' | 'weed' = 'normal') => ({ kind, age: 0, life: 1000 });
+    g.cells[5] = { kind: 'bomb', age: 0, life: 1000 };
+    for (const k of [0, 1, 2, 4, 6, 8, 9, 10]) g.cells[k] = f(k === 2 ? 'weed' : k === 9 ? 'gold' : 'normal');
+    for (const k of [3, 7, 15]) g.cells[k] = f();
+    const ev = tap(g, 5);
+    expect(ev).toMatchObject({ t: 'trap', kind: 'bomb' });
+    expect(ev && ev.t === 'trap' ? [...ev.cleared].sort((a, b) => a - b) : []).toEqual([0, 1, 2, 4, 6, 8, 9, 10]);
+    for (const k of [0, 1, 2, 4, 5, 6, 8, 9, 10]) expect(g.cells[k]).toBeNull();
+    for (const k of [3, 7, 15]) expect(g.cells[k]).not.toBeNull();
+    expect(g.score).toBe(30);
+    expect(g.lives).toBe(2);
+  });
+  it('bombe dans un coin : seulement 3 voisines', () => {
+    const g = hardGame();
+    g.cells[0] = { kind: 'bomb', age: 0, life: 1000 };
+    for (const k of [1, 4, 5, 2]) g.cells[k] = { kind: 'normal', age: 0, life: 1000 };
+    const ev = tap(g, 0);
+    expect(ev && ev.t === 'trap' ? ev.cleared.length : -1).toBe(3);
+    expect(g.cells[2]).not.toBeNull();
+  });
+  it('bombe sur la dernière vie : fin de partie', () => {
+    const g = hardGame();
+    g.lives = 1;
     spawnAll(g, 'bomb');
     tap(g, 0);
-    expect(g.lives).toBe(0);
     expect(g.over).toBe(true);
   });
   it('mauvaise fleur sur la dernière vie : fin de partie', () => {

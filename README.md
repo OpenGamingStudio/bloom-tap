@@ -17,6 +17,8 @@ A reflex web game: tap the flowers before they wilt. Playable in the browser, on
 | Points | 10 par fleur, ×2 de 4 à 6 fleurs enchaînées, jusqu'à ×5 ; l'enchaînement tient si l'écart entre deux taps est de moins de 1,1 s |
 | Vies | 3 ; une fleur fanée coûte une vie et casse le combo ; une case vide touchée ne coûte rien |
 | Vitesse | la durée de vie des fleurs et l'écart entre apparitions baissent peu à peu pendant 2 minutes |
+| Mode difficile | des mauvaises fleurs (une vie en moins) et des bombes apparaissent : une bombe touchée coûte aussi une vie, remet le combo à zéro et son explosion efface sans points les fleurs des 8 cases voisines ; un piège ignoré disparaît sans rien coûter |
+| Sons | synthétisés (Web Audio, aucun fichier) : mauvaise fleur et bombe sonnent différemment ; bouton « Sons » dans le menu |
 | Pétales | 1 par fleur écloses (2 pour une dorée), cumulés d'une partie à l'autre |
 | Boutique | Fleur lente (30 pétales, fleurs 35 % plus durables), Fleur dorée (40, une fleur sur cinq vaut ×2), Vie en plus (60, 4 vies au départ) |
 | Sauvegarde | `localStorage` (`bloomtap.save`), versionnée, validée à la lecture ; le jeu marche aussi sans stockage |

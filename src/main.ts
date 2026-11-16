@@ -229,6 +229,7 @@ function show(m: Mode) {
 }
 
 function refreshMenu() {
+  $('m-version').textContent = C.VERSION;
   $('m-best').textContent = String(save.data.best);
   $('m-best-hard').textContent = String(save.data.bestHard);
   $('m-petals').textContent = String(save.data.petals);

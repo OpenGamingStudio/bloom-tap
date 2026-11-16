@@ -1,4 +1,6 @@
 // Toutes les valeurs de réglage de Bloom Tap.
+/** Version du jeu (semver), alignée sur package.json (test dans tests/version.test.ts). */
+export const VERSION = '1.1.0';
 export const SAVE_KEY = 'bloomtap.save';
 export const SAVE_VERSION = 1;
 

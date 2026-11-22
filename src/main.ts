@@ -1,7 +1,7 @@
 import './style.css';
 import * as C from './config';
 import { ITEMS, type PerkId } from './shop';
-import { buy, load, write, type Loaded } from './save';
+import { buy, load, sanitize, write, type Loaded } from './save';
 import { createGame, isTrap, multiplier, stageOf, tap, tick, type Ev, type Game } from './sim';
 import { makeRng } from './rng';
 import { buzz, hapticAvailable, hapticOn, setHaptic } from './haptic';
@@ -218,6 +218,7 @@ const firstFocus: Record<Exclude<Mode, 'play'>, string> = { menu: 'm-play', paus
 
 function show(m: Mode) {
   mode = m;
+  if (m !== 'menu') window.OGSAccount?.show(false); // le bouton compte n'est proposé que sur le menu
   for (const k of Object.keys(scr) as (keyof typeof scr)[]) scr[k].hidden = k !== m;
   gameEl.toggleAttribute('inert', m !== 'play');
   if (m === 'play') {
@@ -234,6 +235,7 @@ function refreshMenu() {
   $('m-best-hard').textContent = String(save.data.bestHard);
   $('m-petals').textContent = String(save.data.petals);
   $('m-warn').hidden = save.persistent && persist();
+  window.OGSAccount?.show(true);
 }
 
 function start(hard = hardMode) {
@@ -461,3 +463,19 @@ if ((import.meta.env.DEV || import.meta.env.MODE === 'e2e') && new URLSearchPara
 
 refreshMenu();
 show('menu');
+
+/** Compte OpenGamingStudio (facultatif) : la progression suit le joueur sur tous ses appareils. */
+declare global { interface Window { OGSAccount?: { init(c: Record<string, unknown>): void; show(on: boolean): void } } }
+window.OGSAccount?.init({
+  game: 'bloom-tap', version: C.VERSION, color: '#ffc93c', anchor: 'top-left', offset: [8, 8],
+  getSave: () => save.data,
+  applySave: (s: unknown) => {
+    if (typeof s !== 'object' || s === null || Array.isArray(s)) return;
+    save.data = sanitize(s as Record<string, unknown>);
+    persist();
+    if (mode === 'menu') refreshMenu();
+  },
+  isEmpty: (s: { games?: number; petals?: number; best?: number }) => !s || (!s.games && !s.petals && !s.best),
+  describe: (s: { best?: number; bestHard?: number; petals?: number }) =>
+    `Record ${s?.best ?? 0} · difficile ${s?.bestHard ?? 0} · ${s?.petals ?? 0} pétales`,
+});
